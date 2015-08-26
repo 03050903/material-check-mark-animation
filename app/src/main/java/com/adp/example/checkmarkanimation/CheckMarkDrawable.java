@@ -39,14 +39,14 @@ public class CheckMarkDrawable extends Drawable {
     private final float mStrokeWidth;
     private float mInset;
     private float mProgress;
+    private float mRotation;
 
-    @IconType private int mPrevIconType = CHECK;
-    @IconType private int mCurrIconType = CHECK;
+    @IconType private int mPrevIconType;
+    @IconType private int mCurrIconType;
 
     private float[][][] mEndPoints;
     private float[][][] mControlPoints1;
     private float[][][] mControlPoints2;
-
     private float[][][] mArrowHeadPoints;
 
     public CheckMarkDrawable(Context context) {
@@ -59,6 +59,13 @@ public class CheckMarkDrawable extends Drawable {
         mArrowHeadPaint.setColor(Color.WHITE);
         mStrokeWidth = res.getDimensionPixelSize(R.dimen.stroke_width);
         mPaint.setStrokeWidth(mStrokeWidth);
+    }
+
+    public void setIconType(@IconType int iconType) {
+        mCurrIconType = mPrevIconType = iconType;
+        mRotation = iconType == CHECK ? 90 : 0;
+        mProgress = 1;
+        invalidateSelf();
     }
 
     @Override
@@ -149,14 +156,11 @@ public class CheckMarkDrawable extends Drawable {
 
         canvas.save();
         canvas.translate(mInset, mInset);
-        if (mPrevIconType == CHECK || mCurrIconType == CHECK) {
-            final float progress = mCurrIconType == CHECK ? mProgress : 1 - mProgress;
-            canvas.translate(lerp(0, -(r / 2 * cos(55) - r / 4 * cos(35)), progress), 0); // center the check horizontally
-            canvas.translate(0, lerp(r / 2 * cos(55), 0, progress)); // center the check vertically
-            canvas.rotate(90 + lerp(0, -450, progress), w / 2, h / 2);
-        } else {
-            canvas.rotate(lerp(0, -360, mProgress), w / 2, h / 2);
+        if (mCurrIconType == CHECK) {
+            canvas.translate(lerp(0, -(r / 2 * cos(55) - r / 4 * cos(35)), mProgress), 0); // center the check horizontally
+            canvas.translate(0, lerp(0, r / 2 * cos(55), mProgress)); // center the check vertically
         }
+        canvas.rotate(mRotation, w / 2, h / 2);
 
         mPath.rewind();
         mPath.moveTo(end(0, 0), end(0, 1));
@@ -198,6 +202,8 @@ public class CheckMarkDrawable extends Drawable {
 
     public Animator getCheckMarkAnimator(@IconType final int nextIconType) {
         final ValueAnimator anim = ValueAnimator.ofFloat(0, 1);
+        final float startRotation = mRotation;
+        final float endRotation = nextIconType == CHECK ? -270 : -360;
         anim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -209,6 +215,7 @@ public class CheckMarkDrawable extends Drawable {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mProgress = (float) animation.getAnimatedValue();
+                mRotation = lerp(startRotation, endRotation, mProgress) % 360;
                 invalidateSelf();
             }
         });

@@ -12,6 +12,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         final CheckMarkView view = (CheckMarkView) findViewById(R.id.check_mark_view);
+        view.setIconType(CheckMarkDrawable.CHECK);
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
